@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Agent Wrapped</title>
+<style id="aw-style">/* Agent Wrapped — landscape card (1600x900) + themes. Shared by the local CLI
+   card and any hosted page. Themes are pure CSS via [data-theme] on #card, so
+   switching never needs a re-render. The card renders at a fixed design size and
+   is scaled to fit the viewport by client.js (so it never opens "zoomed in"). */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+  justify-content: flex-start; gap: 20px; padding: 28px 16px 48px;
+  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: #0a0a14; transition: background .35s ease;
+}
+body[data-page-theme="pastel"]  { background: #f3e8ff; }
+body[data-page-theme="light"]   { background: #e7eaf2; }
+body[data-page-theme="minimal"] { background: #f4f4f4; }
+body[data-page-theme="dark"]    { background: #0b0b0d; }
+
+/* ---- toolbar ---------------------------------------------------------- */
+.bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: center; }
+.themes { display: flex; gap: 8px; flex-wrap: wrap; }
+.tbtn {
+  font: inherit; font-size: 14px; cursor: pointer; color: #cfcfe6;
+  background: rgba(127,127,160,.14); border: 1px solid rgba(127,127,160,.28);
+  border-radius: 999px; padding: 8px 16px; transition: all .15s ease;
+}
+.tbtn:hover { background: rgba(127,127,160,.26); }
+.tbtn.active { background: linear-gradient(90deg,#ff8fb1,#a78bfa); color: #1a1430; border-color: transparent; font-weight: 700; }
+.acts { display: flex; gap: 10px; }
+.btn {
+  font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; border: 0;
+  border-radius: 12px; padding: 12px 20px; color: #1a1430;
+  background: linear-gradient(90deg,#ff8fb1,#a78bfa); box-shadow: 0 8px 26px rgba(167,139,250,.35);
+}
+.btn.ghost { background: transparent; color: #cfcfe6; border: 1px solid rgba(127,127,160,.3); box-shadow: none; }
+.hint { color: #8d89a8; font-size: 13px; width: 100%; text-align: center; }
+
+/* ---- scaling stage ---------------------------------------------------- */
+#stage { position: relative; }
+#card {
+  position: absolute; top: 0; left: 0; width: 1600px; height: 900px;
+  border-radius: 36px; overflow: hidden; color: var(--ink); transform-origin: top left;
+}
+.bg { position: absolute; inset: 0; background: var(--card-bg); }
+.bg::after {
+  content: ""; position: absolute; inset: 0; opacity: var(--stars, 0);
+  background-image:
+    radial-gradient(1.4px 1.4px at 12% 22%, #fff, transparent),
+    radial-gradient(1.2px 1.2px at 78% 12%, #fff, transparent),
+    radial-gradient(1.6px 1.6px at 40% 38%, #cfe, transparent),
+    radial-gradient(1.1px 1.1px at 64% 60%, #fff, transparent),
+    radial-gradient(1.3px 1.3px at 28% 72%, #fff, transparent),
+    radial-gradient(1.5px 1.5px at 88% 82%, #def, transparent),
+    radial-gradient(1.1px 1.1px at 8% 90%, #fff, transparent),
+    radial-gradient(1.2px 1.2px at 52% 8%, #fff, transparent);
+}
+.content {
+  position: relative; height: 100%; padding: 68px 76px;
+  display: grid; grid-template-columns: 0.92fr 1.08fr; gap: 60px;
+}
+.col { display: flex; flex-direction: column; height: 100%; }
+
+/* ---- left column ------------------------------------------------------ */
+.topbar { display: flex; align-items: center; gap: 16px; }
+.brand {
+  font-weight: 800; letter-spacing: .26em; font-size: 24px;
+  background: linear-gradient(90deg, var(--a1), var(--a2));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.period {
+  font-size: 16px; color: var(--ink); opacity: .62; letter-spacing: .03em;
+  border: 1px solid var(--cell-border); border-radius: 999px; padding: 5px 14px;
+}
+.rankpill {
+  font-size: 16px; font-weight: 800; letter-spacing: .04em; padding: 6px 16px;
+  border-radius: 999px; color: #fff;
+  background: linear-gradient(90deg, var(--a1), var(--a2));
+  box-shadow: var(--peak-glow);
+}
+#card[data-theme="minimal"] .rankpill { background: #0a0a0a; }
+.hero { margin-top: 40px; }
+.hero-num {
+  font-family: 'Consolas','SF Mono',monospace; font-weight: 800; font-size: 132px;
+  line-height: .9; letter-spacing: -.045em; color: var(--hero); text-shadow: var(--hero-glow);
+}
+.hero-label { margin-top: 16px; font-size: 25px; color: var(--ink); opacity: .68; letter-spacing: .01em; max-width: 90%; }
+
+.archetype {
+  margin-top: 36px; display: flex; align-items: center; gap: 18px;
+  background: var(--badge-bg); border: 1px solid var(--badge-border);
+  border-radius: 22px; padding: 18px 26px; width: fit-content;
+}
+.emoji { font-size: 52px; line-height: 1; }
+.arche-name { font-size: 33px; font-weight: 800; color: var(--hero); }
+.arche-tier { font-size: 19px; color: var(--accent-text); margin-top: 3px; letter-spacing: .01em; }
+
+.roast { margin-top: 30px; font-style: italic; font-size: 24px; line-height: 1.4;
+  color: var(--ink); opacity: .85; max-width: 96%; }
+
+.handle {
+  margin-top: auto; display: flex; align-items: center; gap: 12px;
+  font-size: 26px; font-weight: 800; color: var(--hero);
+}
+.handle .dot { width: 38px; height: 38px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--a1), var(--a2)); display: inline-block; }
+
+/* ---- right column ----------------------------------------------------- */
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.cell { background: var(--cell-bg); border: 1px solid var(--cell-border);
+  border-radius: 20px; padding: 24px 20px; }
+.cell-val { font-family: 'Consolas','SF Mono',monospace; font-size: 44px; font-weight: 800;
+  color: var(--hero); letter-spacing: -.02em; line-height: 1; }
+.cell-label { margin-top: 9px; font-size: 17px; color: var(--ink); opacity: .6; }
+
+.histo-wrap { margin-top: 38px; }
+.histo-title { font-size: 17px; letter-spacing: .16em; color: var(--ink); opacity: .55;
+  display: flex; justify-content: space-between; align-items: baseline; }
+.histo-peak { color: var(--accent-text); opacity: 1; letter-spacing: .01em; font-weight: 600; }
+.histo { margin-top: 16px; height: 132px; display: flex; align-items: flex-end; gap: 7px; }
+.bar2 { flex: 1; border-radius: 7px 7px 3px 3px; background: linear-gradient(180deg, var(--bar-from), var(--bar-to)); }
+.bar2.peak { background: linear-gradient(180deg, var(--peak-from), var(--peak-to)); box-shadow: var(--peak-glow); }
+.histo-axis { display: flex; justify-content: space-between; margin-top: 9px; font-size: 14px; color: var(--ink); opacity: .42; }
+
+.topfile { margin-top: auto; display: flex; justify-content: space-between; align-items: center;
+  background: var(--tf-bg); border: 1px solid var(--tf-border); border-radius: 18px; padding: 22px 26px; }
+.tf-label { font-size: 16px; letter-spacing: .14em; color: var(--ink); opacity: .55; }
+.tf-val { font-family: 'Consolas','SF Mono',monospace; font-size: 25px; color: var(--hero); }
+
+/* ---- themes ----------------------------------------------------------- */
+#card[data-theme="pastel"] {
+  --ink:#3a2d52; --hero:#2b2142; --a1:#ff7eb6; --a2:#9d7bff; --accent-text:#c0569e; --stars:0;
+  --hero-glow: none;
+  --cell-bg: rgba(255,255,255,.55); --cell-border: rgba(255,255,255,.85);
+  --badge-bg: rgba(255,255,255,.55); --badge-border: rgba(255,255,255,.9);
+  --bar-from:#ff9ec7; --bar-to:#ffd9ea;
+  --peak-from:#9d7bff; --peak-to:#c9b6ff; --peak-glow: 0 0 22px rgba(157,123,255,.5);
+  --tf-bg: rgba(255,255,255,.5); --tf-border: rgba(255,255,255,.85);
+  --card-bg:
+    radial-gradient(900px 600px at 8% 0%, #ffe0c2, transparent 60%),
+    radial-gradient(900px 700px at 100% 10%, #ffc4dd, transparent 60%),
+    radial-gradient(1000px 800px at 60% 110%, #d9c6ff, transparent 60%),
+    linear-gradient(135deg, #ffe9d6 0%, #ffd2e6 38%, #e7d4ff 70%, #d6f0e8 100%);
+}
+#card[data-theme="cosmic"] {
+  --ink:#e9e7ff; --hero:#fff; --a1:#a855f7; --a2:#22d3ee; --accent-text:#5ee0f5; --stars:.55;
+  --hero-glow: 0 0 50px rgba(168,85,247,.6), 0 0 100px rgba(34,211,238,.32);
+  --cell-bg: rgba(255,255,255,.05); --cell-border: rgba(255,255,255,.12);
+  --badge-bg: rgba(168,85,247,.12); --badge-border: rgba(168,85,247,.4);
+  --bar-from: rgba(168,85,247,.6); --bar-to: rgba(168,85,247,.12);
+  --peak-from:#22d3ee; --peak-to:#a855f7; --peak-glow: 0 0 22px rgba(34,211,238,.7);
+  --tf-bg: rgba(34,211,238,.07); --tf-border: rgba(34,211,238,.24);
+  --card-bg:
+    radial-gradient(1100px 700px at 12% -5%, rgba(168,85,247,.55), transparent 60%),
+    radial-gradient(1000px 800px at 98% 12%, rgba(34,211,238,.35), transparent 55%),
+    radial-gradient(900px 900px at 60% 120%, rgba(168,85,247,.3), transparent 60%),
+    linear-gradient(135deg, #0c0820 0%, #08061a 55%, #06040f 100%);
+}
+#card[data-theme="dark"] {
+  --ink:#f4f4f5; --hero:#fff; --a1:#4ade80; --a2:#22d3ee; --accent-text:#5ef0a0; --stars:.14;
+  --hero-glow: 0 0 36px rgba(74,222,128,.22);
+  --cell-bg: rgba(255,255,255,.045); --cell-border: rgba(255,255,255,.1);
+  --badge-bg: rgba(74,222,128,.09); --badge-border: rgba(74,222,128,.32);
+  --bar-from: rgba(74,222,128,.55); --bar-to: rgba(74,222,128,.08);
+  --peak-from:#4ade80; --peak-to:#22d3ee; --peak-glow: 0 0 18px rgba(74,222,128,.5);
+  --tf-bg: rgba(255,255,255,.035); --tf-border: rgba(255,255,255,.11);
+  --card-bg: radial-gradient(1200px 800px at 100% 0%, #1a1a20, transparent 60%), linear-gradient(135deg, #161619 0%, #0e0e11 100%);
+}
+#card[data-theme="light"] {
+  --ink:#0e1116; --hero:#0e1116; --a1:#7c3aed; --a2:#2563eb; --accent-text:#7c3aed; --stars:0;
+  --hero-glow: none;
+  --cell-bg:#f6f8fd; --cell-border:#e6e9f2;
+  --badge-bg:#f2effe; --badge-border:#d9cffb;
+  --bar-from: rgba(124,58,237,.55); --bar-to: rgba(124,58,237,.12);
+  --peak-from:#7c3aed; --peak-to:#2563eb; --peak-glow: 0 0 16px rgba(124,58,237,.3);
+  --tf-bg:#eef4ff; --tf-border:#d6e2fb;
+  --card-bg: radial-gradient(1000px 700px at 100% 0%, #f0f3ff, transparent 60%), linear-gradient(135deg, #ffffff 0%, #eef2fb 100%);
+  box-shadow: inset 0 0 0 1px #e6e9f2;
+}
+#card[data-theme="minimal"] {
+  --ink:#0a0a0a; --hero:#0a0a0a; --a1:#0a0a0a; --a2:#0a0a0a; --accent-text:#0a0a0a; --stars:0;
+  --hero-glow: none;
+  --cell-bg:#ffffff; --cell-border:#ececec;
+  --badge-bg:#ffffff; --badge-border:#e2e2e2;
+  --bar-from:#dcdcdc; --bar-to:#ededed;
+  --peak-from:#0a0a0a; --peak-to:#0a0a0a; --peak-glow: none;
+  --tf-bg:#fafafa; --tf-border:#eee;
+  --card-bg: #ffffff;
+  box-shadow: inset 0 0 0 1px #111;
+}
+#card[data-theme="minimal"] .hero-num { font-weight: 600; }
+#card[data-theme="minimal"] .brand { letter-spacing: .4em; }
+</style></head>
+<body>
+  <div class="bar">
+    <div class="themes"><button class="tbtn" data-set="dark">Dark</button><button class="tbtn" data-set="cosmic">Cosmic</button><button class="tbtn" data-set="light">Light</button><button class="tbtn" data-set="minimal">Minimal</button><button class="tbtn" data-set="pastel">Pastel</button></div>
+    <div class="acts">
+      <button class="btn" id="dl">⬇ Download PNG</button>
+      <button class="btn ghost" id="sx">Share on X</button>
+    </div>
+    <span class="hint">Pick a theme · 100% local · nothing uploaded</span>
+  </div>
+  <div id="stage"><div id="card" data-theme="dark"></div></div>
+<script>/* Agent Wrapped — browser runtime. Builds the landscape card from a stats
+   object, scales it to fit the viewport, handles theme switching, PNG export
+   and the X share intent. No dependencies. */
+(function () {
+  var REPO = "github.com/geartbuilds/agent-wrapped";
+  var RUN = "npx github:geartbuilds/agent-wrapped";
+
+  function fmtInt(n) { return Math.round(n).toLocaleString("en-US"); }
+  function fmtUSD(n) {
+    if (n >= 1000) return "$" + (n / 1000).toFixed(1) + "k";
+    if (n >= 100) return "$" + n.toFixed(0);
+    return "$" + n.toFixed(2);
+  }
+  function fmtTokens(n) {
+    if (n >= 1e9) return (n / 1e9).toFixed(1) + "B";
+    if (n >= 1e6) return (n / 1e6).toFixed(1) + "M";
+    if (n >= 1e3) return (n / 1e3).toFixed(0) + "k";
+    return String(n);
+  }
+  function hourLabel(h) {
+    if (h === 0) return "12 AM";
+    if (h === 12) return "12 PM";
+    return h < 12 ? h + " AM" : (h - 12) + " PM";
+  }
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+    });
+  }
+  function bars(hist, peak) {
+    var max = Math.max.apply(null, [1].concat(hist));
+    return hist.map(function (v, h) {
+      var pct = Math.max(4, Math.round((v / max) * 100));
+      return '<div class="' + (h === peak ? "bar2 peak" : "bar2") + '" style="height:' + pct + '%"></div>';
+    }).join("");
+  }
+
+  function buildCard(s, handle) {
+    var a = s.archetype || {};
+    var cells = [
+      { label: "Sessions", value: fmtInt(s.sessions) },
+      { label: "Spent (est.)", value: fmtUSD(s.costUSD) },
+      { label: "Tokens", value: fmtTokens(s.tokens.total) },
+      { label: "Your prompts", value: fmtInt(s.humanPrompts) },
+      { label: "Active days", value: fmtInt(s.activeDays) },
+      { label: "Longest streak", value: s.longestStreak + "d" },
+    ];
+    var cellHtml = cells.map(function (c) {
+      return '<div class="cell"><div class="cell-val">' + c.value + '</div><div class="cell-label">' + c.label + '</div></div>';
+    }).join("");
+    var topFile = s.topFile ? esc(s.topFile.name) + " · " + fmtInt(s.topFile.edits) + " edits" : "—";
+
+    var left =
+      '<div class="col">' +
+        '<div class="topbar"><span class="brand">AGENT&nbsp;WRAPPED</span><span class="period">' + esc(s.period.label) + '</span>' +
+          (s.rankLabel ? '<span class="rankpill">' + esc(s.rankLabel) + '</span>' : '') + '</div>' +
+        '<div class="hero"><div class="hero-num">' + fmtInt(s.linesWritten) + '</div>' +
+          '<div class="hero-label">lines of code your agent wrote</div></div>' +
+        '<div class="archetype"><span class="emoji">' + (a.emoji || "✦") + '</span>' +
+          '<div><div class="arche-name">' + esc(a.name || "") + '</div>' +
+          '<div class="arche-tier">' + esc(a.tier || "") + ' · peaks at ' + hourLabel(s.peakHour) + '</div></div></div>' +
+        (s.roast ? '<div class="roast">“' + esc(s.roast) + '”</div>' : '') +
+        '<div class="handle"><span class="dot"></span>' + esc(handle) + '</div>' +
+      '</div>';
+
+    var right =
+      '<div class="col">' +
+        '<div class="grid">' + cellHtml + '</div>' +
+        '<div class="histo-wrap">' +
+          '<div class="histo-title">WHEN YOU SHIP <span class="histo-peak">busiest at ' + hourLabel(s.peakHour) + '</span></div>' +
+          '<div class="histo">' + bars(s.hourHistogram, s.peakHour) + '</div>' +
+          '<div class="histo-axis"><span>12a</span><span>6a</span><span>12p</span><span>6p</span><span>11p</span></div>' +
+        '</div>' +
+        '<div class="topfile"><span class="tf-label">MOST-EDITED FILE</span><span class="tf-val">' + topFile + '</span></div>' +
+      '</div>';
+
+    return '<div class="bg"></div><div class="content">' + left + right + '</div>';
+  }
+
+  var current = { stats: null, handle: "@geartbuilds" };
+
+  function fit() {
+    var card = document.getElementById("card");
+    var stage = document.getElementById("stage");
+    if (!card || !stage) return;
+    var pad = 130;
+    var s = Math.min(1, (window.innerWidth - 32) / 1600, (window.innerHeight - pad) / 900);
+    s = Math.max(0.2, s);
+    card.style.transform = "scale(" + s + ")";
+    stage.style.width = 1600 * s + "px";
+    stage.style.height = 900 * s + "px";
+  }
+
+  function applyTheme(name) {
+    var card = document.getElementById("card");
+    card.setAttribute("data-theme", name);
+    document.body.setAttribute("data-page-theme", name);
+    var btns = document.querySelectorAll(".tbtn");
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].classList.toggle("active", btns[i].getAttribute("data-set") === name);
+    }
+    try { localStorage.setItem("aw-theme", name); } catch (e) {}
+  }
+
+  function shareX() {
+    var s = current.stats, a = s.archetype || {};
+    var t = "My Agent Wrapped (" + s.period.label + "): " + fmtInt(s.linesWritten) +
+      " lines of code my AI agent wrote, " + (a.emoji || "") + " " + (a.name || "") +
+      ". Get yours: " + RUN + "  " + current.handle;
+    window.open("https://x.com/intent/tweet?text=" + encodeURIComponent(t), "_blank");
+  }
+
+  function downloadPNG() {
+    var card = document.getElementById("card");
+    var w = card.offsetWidth, h = card.offsetHeight; // 1600x900, ignores transform
+    var css = "";
+    var styleEl = document.getElementById("aw-style");
+    if (styleEl) css = styleEl.textContent;
+    var clone = card.cloneNode(true);
+    clone.style.transform = "none";
+    var xml = new XMLSerializer().serializeToString(clone);
+    var svg = "<svg xmlns='http://www.w3.org/2000/svg' width='" + w + "' height='" + h + "'>" +
+      "<foreignObject width='100%' height='100%'>" +
+      "<div xmlns='http://www.w3.org/1999/xhtml'><style>" + css + "</style>" + xml + "</div>" +
+      "</foreignObject></svg>";
+    var img = new Image();
+    img.onload = function () {
+      var sc = 2, c = document.createElement("canvas");
+      c.width = w * sc; c.height = h * sc;
+      var ctx = c.getContext("2d"); ctx.scale(sc, sc); ctx.drawImage(img, 0, 0);
+      c.toBlob(function (b) {
+        var url = URL.createObjectURL(b), el = document.createElement("a");
+        var label = (current.stats.period.label || "wrapped").replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+        el.href = url; el.download = "agent-wrapped-" + label + ".png";
+        el.click(); URL.revokeObjectURL(url);
+      }, "image/png");
+    };
+    img.onerror = function () { alert("PNG export needs a Chromium-based browser (Chrome/Edge). Otherwise just screenshot the card."); };
+    img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+  }
+
+  function render(stats, handle) {
+    current.stats = stats;
+    current.handle = handle || "@geartbuilds";
+    document.getElementById("card").innerHTML = buildCard(stats, current.handle);
+    var saved = null;
+    try { saved = localStorage.getItem("aw-theme"); } catch (e) {}
+    applyTheme(saved || "dark");
+    fit();
+    window.addEventListener("resize", fit);
+
+    var btns = document.querySelectorAll(".tbtn");
+    for (var i = 0; i < btns.length; i++) {
+      (function (btn) {
+        btn.addEventListener("click", function () { applyTheme(btn.getAttribute("data-set")); });
+      })(btns[i]);
+    }
+    var dl = document.getElementById("dl"); if (dl) dl.addEventListener("click", downloadPNG);
+    var sx = document.getElementById("sx"); if (sx) sx.addEventListener("click", shareX);
+  }
+
+  window.AgentWrapped = { render: render };
+})();
+</script>
+<script>
+    function decodeStats(){
+      try {
+        var raw = location.hash.replace(/^#/, "");
+        if (!raw) return null;
+        var json = decodeURIComponent(escape(atob(raw)));
+        return JSON.parse(json);
+      } catch (e) { return null; }
+    }
+    var s = decodeStats() || {"period":{"start":0,"end":0,"label":"This Month"},"sessions":87,"projects":6,"models":["claude-opus-4-8","claude-sonnet-4-6"],"versions":[],"costUSD":42.17,"linesWritten":18432,"tokens":{"input":0,"output":0,"cacheRead":0,"cacheWrite":0,"total":312000000},"assistantMsgs":0,"humanPrompts":412,"toolCounts":{},"favoriteTool":"Edit","hourHistogram":[9,14,22,18,7,2,1,1,3,6,9,11,13,12,10,9,8,10,12,15,17,16,13,11],"weekdayHistogram":[12,18,16,19,14,5,3],"peakHour":2,"topFile":{"path":"src/app.tsx","name":"app.tsx","edits":34,"lines":1290},"activeDays":19,"longestStreak":8,"biggestSessionUSD":6.4,"rank":3,"total":100,"rankLabel":"TOP 3%","firstTs":null,"lastTs":null,"archetype":{"emoji":"🌙","name":"The 2 AM Shipper","tier":"Heavy Hitter","title":"The 2 AM Shipper"}};
+    AgentWrapped.render(s, s.handle || "@geartbuilds");
+  </script>
+</body></html>

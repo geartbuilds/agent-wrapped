@@ -1,0 +1,8 @@
+node_modules/
+*.log
+.DS_Store
+# Generated cards (never commit anyone's personal stats)
+agent-wrapped-*.html
+agent-wrapped-*.png
+*.local.*
+.gstack/

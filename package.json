@@ -1,0 +1,40 @@
+{
+  "name": "agent-wrapped",
+  "version": "0.1.0",
+  "description": "Spotify Wrapped for your AI coding — one command turns your Claude Code logs into a gorgeous shareable card. 100% local.",
+  "type": "module",
+  "bin": {
+    "agent-wrapped": "bin/agent-wrapped.js"
+  },
+  "scripts": {
+    "start": "node bin/agent-wrapped.js",
+    "build:web": "node scripts/build-web.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "claude-code",
+    "wrapped",
+    "ai-coding",
+    "stats",
+    "cli",
+    "developer-tools"
+  ],
+  "author": "Geart Ferhati (@geartbuilds)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/geartbuilds/agent-wrapped.git"
+  },
+  "bugs": {
+    "url": "https://github.com/geartbuilds/agent-wrapped/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "homepage": "https://geartferhati.com/wrapped"
+}
